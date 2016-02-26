@@ -2,13 +2,13 @@
 * File             t.sql
 * Description      Display core Greenplum object details 
 * Parameters       
-*      tname       name of table/object to display, can be part of the name only 
+*      tname       Name of object to display, can be part of the name 
 * 
 * History          
 *      Date        Change
 *      25/02/2016  Initial version 
 ******************************************************************************/
-\prompt 'Table Name: ' tname_noquote
+\prompt 'Object Name: ' tname_noquote
 \set tname '\'' :tname_noquote '\''
 SELECT a.rolname owner, ns.nspname schame, c.relname, c.relfilenode file_name
      , c.relpages * 32 / 1024 MB, c.reltuples nrows, c.relhasindex idx
