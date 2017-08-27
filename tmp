@@ -1,1 +1,36 @@
-nohup gptransfer --dest-host=xzur0592pap.zur.swissbank.com --source-host=xzur0353pap.zur.swissbank.com --source-map-file=prdservers --source-user=gpmig --format=CSV --quote="\001" --truncate -a --batch-size=4 -t "gprdsp.sandbox_prj_ep./.*/" >  gptransfer.gprdsp.sandbox_prj_ep.out 2>&1 &
+gprdsp=# \dp staging.cd_contact_ext
+          Access privileges for database "gprdsp"
+ Schema  |      Name      | Type  |    Access privileges
+---------+----------------+-------+-------------------------
+ staging | cd_contact_ext | table | {gp_etl=arwdDxt/gp_etl}
+(1 row)
+
+gprdsp=# SELECT * FROM information_schema.table_privileges WHERE
+grantee         grantor         is_grantable    table_catalog   table_name      table_schema    with_hierarchy  privilege_type
+gprdsp=# SELECT * FROM information_schema.table_privileges WHERE table_name = 'cd_contact_ext' ;
+ grantor  |       grantee        | table_catalog |  table_schema  |   table_name   | privilege_type | is_grantable | with_hierarchy
+----------+----------------------+---------------+----------------+----------------+----------------+--------------+----------------
+ kavandam | erd_gpdb_2_oper      | gprdsp        | sandbox_prj_ep | cd_contact_ext | SELECT         | NO           | NO
+ kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | SELECT         | NO           | NO
+ kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | INSERT         | NO           | NO
+ kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | UPDATE         | NO           | NO
+ kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | DELETE         | NO           | NO
+ kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | TRUNCATE       | NO           | NO
+ kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | REFERENCES     | NO           | NO
+ kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | TRIGGER        | NO           | NO
+ kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | SELECT         | NO           | NO
+ kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | INSERT         | NO           | NO
+ kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | UPDATE         | NO           | NO
+ kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | DELETE         | NO           | NO
+ kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | TRUNCATE       | NO           | NO
+ kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | REFERENCES     | NO           | NO
+ kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | TRIGGER        | NO           | NO
+ kavandam | erd_gpdb_1_read_only | gprdsp        | sandbox_prj_ep | cd_contact_ext | SELECT         | NO           | NO
+ gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | SELECT         | NO           | NO
+ gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | INSERT         | NO           | NO
+ gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | UPDATE         | NO           | NO
+ gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | DELETE         | NO           | NO
+ gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | TRUNCATE       | NO           | NO
+ gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | REFERENCES     | NO           | NO
+ gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | TRIGGER        | NO           | NO
+(23 rows)
