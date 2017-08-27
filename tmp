@@ -1,36 +1,33 @@
-gprdsp=# \dp staging.cd_contact_ext
-          Access privileges for database "gprdsp"
- Schema  |      Name      | Type  |    Access privileges
----------+----------------+-------+-------------------------
- staging | cd_contact_ext | table | {gp_etl=arwdDxt/gp_etl}
+gprdsp=# \dt core_etl.etl_job
+               List of relations
+  Schema  |  Name   | Type  | Owner  | Storage
+----------+---------+-------+--------+---------
+ core_etl | etl_job | table | gp_etl | heap
 (1 row)
 
-gprdsp=# SELECT * FROM information_schema.table_privileges WHERE
-grantee         grantor         is_grantable    table_catalog   table_name      table_schema    with_hierarchy  privilege_type
-gprdsp=# SELECT * FROM information_schema.table_privileges WHERE table_name = 'cd_contact_ext' ;
- grantor  |       grantee        | table_catalog |  table_schema  |   table_name   | privilege_type | is_grantable | with_hierarchy
-----------+----------------------+---------------+----------------+----------------+----------------+--------------+----------------
- kavandam | erd_gpdb_2_oper      | gprdsp        | sandbox_prj_ep | cd_contact_ext | SELECT         | NO           | NO
- kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | SELECT         | NO           | NO
- kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | INSERT         | NO           | NO
- kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | UPDATE         | NO           | NO
- kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | DELETE         | NO           | NO
- kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | TRUNCATE       | NO           | NO
- kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | REFERENCES     | NO           | NO
- kavandam | erd_gpdb_prj_ep      | gprdsp        | sandbox_prj_ep | cd_contact_ext | TRIGGER        | NO           | NO
- kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | SELECT         | NO           | NO
- kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | INSERT         | NO           | NO
- kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | UPDATE         | NO           | NO
- kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | DELETE         | NO           | NO
- kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | TRUNCATE       | NO           | NO
- kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | REFERENCES     | NO           | NO
- kavandam | kavandam             | gprdsp        | sandbox_prj_ep | cd_contact_ext | TRIGGER        | NO           | NO
- kavandam | erd_gpdb_1_read_only | gprdsp        | sandbox_prj_ep | cd_contact_ext | SELECT         | NO           | NO
- gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | SELECT         | NO           | NO
- gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | INSERT         | NO           | NO
- gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | UPDATE         | NO           | NO
- gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | DELETE         | NO           | NO
- gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | TRUNCATE       | NO           | NO
- gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | REFERENCES     | NO           | NO
- gp_etl   | gp_etl               | gprdsp        | staging        | cd_contact_ext | TRIGGER        | NO           | NO
-(23 rows)
+
+--
+-- Name: etl_job; Type: TABLE; Schema: core_etl; Owner: el_etl; Tablespace:
+--
+
+CREATE TABLE etl_job (
+    job_id integer,
+    incremental boolean,
+    source_db character varying,
+    source_schema character varying,
+    source_table_name character varying,
+    staging_schema character varying,
+    staging_table_name character varying,
+    target_schema character varying,
+    target_table_name character varying,
+    external_table_schema character varying,
+    external_table_name character varying,
+    extract_projection character varying,
+    extract_condition character varying,
+    core_in_insert_only boolean,
+    unique_key_columns character varying,
+    incr_extract_key_column_name character varying,
+    incr_extract_key_column_type character varying,
+    last_modified timestamp without time zone DEFAULT ('now'::text)::timestamp without time zone
+)
+WITH (appendonly=true, compresslevel=5) DISTRIBUTED BY (job_id);
