@@ -1,13 +1,5 @@
-source
-
-gprdsp=#  SELECT relname, reloptions FROM pg_class WHERE relname = 'mdb_transaction_1123_1_prt_10' ;
--[ RECORD 1 ]---------------------------------------------------
-relname    | mdb_transaction_1123_1_prt_10
-reloptions | {appendonly=true,compresstype=zlib,compresslevel=5}
+proc privs source
+'=X/gp_etl;gp_etl=X/gp_etl'
 
 target 
-gprdsp=#  SELECT relname, reloptions FROM pg_class WHERE relname = 'mdb_transaction_1123_1_prt_10' ;
--[ RECORD 1 ]-------------------------------------------------------------------
-relname    | mdb_transaction_1123_1_prt_10
-reloptions | {orientation=row,appendonly=true,compresstype=zlib,compresslevel=5}
-
+'gp_etl=X/gp_etl;=X/gp_etl'
