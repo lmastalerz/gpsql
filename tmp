@@ -1,2 +1,1 @@
-SELECT $$SELECT 'ALTER SEQUENCE $$ || sequence_schema || '.' || sequence_name || $$ RESTART WITH ' || last_value + 1 || ';' FROM $$ || sequence_schema || '.' || sequence_name || ';' 
-FROM information_schema.sequences ;
+nohup gptransfer --dest-host=xzur0592pap.zur.swissbank.com --source-host=xzur0353pap.zur.swissbank.com --source-map-file=prdservers --source-user=gpmig --format=CSV --quote="\001" --truncate -a --batch-size=4 -t "gprdsp.sandbox_prj_ep./.*/" >  gptransfer.gprdsp.sandbox_prj_ep.out 2>&1 &
