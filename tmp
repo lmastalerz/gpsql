@@ -1,33 +1,13 @@
-gprdsp=# \dt core_etl.etl_job
-               List of relations
-  Schema  |  Name   | Type  | Owner  | Storage
-----------+---------+-------+--------+---------
- core_etl | etl_job | table | gp_etl | heap
-(1 row)
+source
 
+gprdsp=#  SELECT relname, reloptions FROM pg_class WHERE relname = 'mdb_transaction_1123_1_prt_10' ;
+-[ RECORD 1 ]---------------------------------------------------
+relname    | mdb_transaction_1123_1_prt_10
+reloptions | {appendonly=true,compresstype=zlib,compresslevel=5}
 
---
--- Name: etl_job; Type: TABLE; Schema: core_etl; Owner: el_etl; Tablespace:
---
+target 
+gprdsp=#  SELECT relname, reloptions FROM pg_class WHERE relname = 'mdb_transaction_1123_1_prt_10' ;
+-[ RECORD 1 ]-------------------------------------------------------------------
+relname    | mdb_transaction_1123_1_prt_10
+reloptions | {orientation=row,appendonly=true,compresstype=zlib,compresslevel=5}
 
-CREATE TABLE etl_job (
-    job_id integer,
-    incremental boolean,
-    source_db character varying,
-    source_schema character varying,
-    source_table_name character varying,
-    staging_schema character varying,
-    staging_table_name character varying,
-    target_schema character varying,
-    target_table_name character varying,
-    external_table_schema character varying,
-    external_table_name character varying,
-    extract_projection character varying,
-    extract_condition character varying,
-    core_in_insert_only boolean,
-    unique_key_columns character varying,
-    incr_extract_key_column_name character varying,
-    incr_extract_key_column_type character varying,
-    last_modified timestamp without time zone DEFAULT ('now'::text)::timestamp without time zone
-)
-WITH (appendonly=true, compresslevel=5) DISTRIBUTED BY (job_id);
