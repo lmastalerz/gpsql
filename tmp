@@ -1,0 +1,22 @@
+gprdsp=# SELECT attnum, attrelid, attname, atttypid  FROM pg_attribute WHERE attrelid = 'sandbox_prj_adhoc.fp_basic_bd_am_1_ext'::REGCLASS ORDER BY attnum;
+ attnum | attrelid |            attname            | atttypid
+--------+----------+-------------------------------+----------
+     -8 |  3478200 | gp_segment_id                 |       23
+     -7 |  3478200 | tableoid                      |       26
+     -6 |  3478200 | cmax                          |       29
+     -5 |  3478200 | xmax                          |       28
+     -4 |  3478200 | cmin                          |       29
+     -3 |  3478200 | xmin                          |       28
+     -1 |  3478200 | ctid                          |       27
+      1 |  3478200 | fs_perm_sec_id                |       25
+      2 |  3478200 | date                          |       25
+      3 |  3478200 | adjdate                       |       25
+      4 |  3478200 | currency                      |       25
+      5 |  3478200 | p_price                       |     1700
+      6 |  3478200 | p_price_open                  |       25
+      7 |  3478200 | p_price_high                  |     1700
+      8 |  3478200 | p_price_low                   |     1700
+      9 |  3478200 | p_volume                      |     1700
+     10 |  3478200 | ........pg.dropped.10........ |        0
+     11 |  3478200 | ........pg.dropped.11........ |        0
+(18 rows)
