@@ -1,5 +1,25 @@
-proc privs source
-'=X/gp_etl;gp_etl=X/gp_etl'
+dependent objects 2
 
-target 
-'gp_etl=X/gp_etl;=X/gp_etl'
+SELECT c.relname dep_class
+     , COALESCE(rw.rulename, '') AS depobj_name
+     , dep.objsubid
+     , rc.relname AS ref_class
+     , COALESCE(rt.relname, '') AS refobj_name     
+     , dep.refobjsubid
+     , CASE dep.deptype
+       WHEN 'i' THEN 'internal'
+       WHEN 'n' THEN 'normal'
+       WHEN 'a' THEN 'auto-drop'
+       WHEN 'p' THEN 'pin'
+       END dep_type 
+FROM   pg_depend dep
+JOIN   pg_class c
+  ON ( dep.classid = c.oid )
+JOIN   pg_class rc   
+  ON ( dep.refclassid = rc.oid )
+LEFT JOIN pg_rewrite rw
+  ON ( dep.objid = rw.oid )
+LEFT JOIN pg_class rt
+  ON ( dep.refobjid = rt.oid)
+WHERE  refobjid = 'core_in_shared.ft_pbt_model'::REGCLASS
+  AND deptype <> 'i';
