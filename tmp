@@ -4,78 +4,13 @@ You can configure Greenplum Database to display log messages on the psql command
 List partition constraints WITH tbl AS (SELECT oid, partitionlevel AS level,              partitiontablename AS part          FROM pg_partitions, pg_class          WHERE tablename = 'mlp' AND partitiontablename=relname             AND partitionlevel=1 )   SELECT tbl.part, consrc     FROM tbl, pg_constraint     WHERE tbl.oid = conrelid ORDER BY consrc;
 Adding/dropping subpartition ALTER TABLE mlp ALTER PARTITION FOR (RANK(2))  DROP PARTITION asia ;ALTER TABLE mlp ALTER PARTITION FOR (RANK(2))  ADD PARTITION canada VALUES ('canada');
 == Writable external tables 
-Can be based on gpfdist or gphdfs for file based writable external table. 
-To divide the output data among multiple files, list multiple gpfdist URIs in your writable external table definition.
-Unload to two files using gpfdist CREATE WRITABLE EXTERNAL TABLE unload_expenses    ( LIKE expenses )    LOCATION ('gpfdist://etlhost-1:8081/expenses1.out',              'gpfdist://etlhost-2:8081/expenses2.out') FORMAT 'TEXT' (DELIMITER ',') DISTRIBUTED BY (exp_id);
-Unload to hdfs. You can only speficy directory  CREATE WRITABLE EXTERNAL TABLE unload_expenses    ( LIKE expenses )    LOCATION ('gphdfs://hdfslhost-1:8081/path')  FORMAT 'TEXT' (DELIMITER ',') DISTRIBUTED BY (exp_id);
-Writable external *web* tables use the EXECUTE clause to specify a shell command, script, or application to run on the *segment hosts* and accept an input stream of data.All segments run the command in EXECUTE whether or not the segment has any data to dump.Commands execute from within the database and cannot access environment variables (such as $PATH) - but somehow they are accessible in EXECUTE clause to export them?
-CREATE WRITABLE EXTERNAL WEB TABLE output (output text)     EXECUTE 'export PATH=$PATH:/home/gpadmin/programs; myprogram.sh'     FORMAT 'TEXT'    DISTRIBUTED RANDOMLY
-The following Greenplum Database variables are available for use in OS commands executed by a web or writable external table (need to be exported)
-$GP_SEG_DATADIR - The location of the data directory of the *segment instance executing* the external table command.$GP_SEGMENT_ID - The ID number of the segment instance executing the external table command (same as dbid in gp_segment_configuration).$GP_SESSION_ID - The database session identifier number associated with the external table statement. $GP_USER -  The database user executing the external table statement. 
-https://gpdb.docs.pivotal.io/43160/admin_guide/load/topics/g-defining-a-command-based-writable-external-web-table.html
--- web external table --To disable EXECUTE in web external tables gp_external_enable_exec = off---
-By default writable external table has random disutibution policy. Define the same policy as the table being exported to improve performance and aviod unnecessary data movement 
 == UNLOAD using copy 
-COPY TO copies data from a table to a file or standard input on Master. 
-Use COPY to output a table's entire contents, or filter the output using a SELECT statement. For example:
-COPY (SELECT * FROM country WHERE country_name LIKE 'A%') TO '/home/gpadmin/a_list_countries.out';
-?? COPY TO execute from sdtin to copy to client??
 === XML in external tables 
-XML data can be transformed into tabular format before loading into database or transformed into XML before unloadnig https://gpdb.docs.pivotal.io/43160/graphics/ext-tables-xml.png
-Transfromation has to be done by the developer using technology such as XSLT, Joost (STX), Java, Python, or Perl STX transformation example: https://gpdb.docs.pivotal.io/43160/admin_guide/load/topics/g-write-a-transform.html
-Once transformation is done it's execution is configured using YAML file https://gpdb.docs.pivotal.io/43160/admin_guide/load/topics/g-write-the-gpfdist-configuration.html
-Tranfroam can be specified in GPLOAD (yet another) YAML or in EXTERNAL TABLE definition (gpfdist running with -c config.yaml )CREATE READABLE EXTERNAL TABLE prices_readable (LIKE prices)   LOCATION ('gpfdist://hostname:8080/prices.xml#transform=prices_input')   FORMAT 'TEXT' (DELIMITER '|')   LOG ERRORS SEGMENT REJECT LIMIT 10;
 
 ===== FOrmatting data (COPY, gpfdist, etc)
-Rows can be formatted either by LF, CR, or both 
-Default columns delimiters: * horizontal TAB (0x09) for text files * comma (0x2C) for CSV files
-No column delimiter at the beignning or end 
-Default NULL representation in the data file * \N (backslash-N) in TEXT mode* empty value with no quotations in CSV mode 
-You can specify empty string "" as NULL in NULL clause if you don't want to distinguish between NULLs and empty strings 
-Row and column separators in data have to escaped. Default escape characters:* \ (backslash) for TEXT format (!) * " (double quote) for CSV format
-If escape characted is present in the data use it to escape itself 
-(?) To load the ampersand character (&), use the escape character to escape its equivalent hexidecimal (\0x26) or octal (\046) representation.
-CSV quoting with " means enclosing in quotes (always?)Embedding the entire field inside a set of double quotes guarantees preservation of leading and trailing whitespace characters:"Free trip to A,B ","5.89 ","Special rate ""1.79"" "
-In CSV mode quoted value surrounded by white space, or any characters other than DELIMITER, includes those characters. This can cause errors if you import data from a system that pads CSV lines with white space to some fixed width.
-== Character encoding 
-When loading or inserting data into Greenplum Database, Greenplum converts the data from the specified client encoding into the server encoding (UTF-8 by default). When sending data back to the client, Greenplum converts the data from the server character encoding into the specified client encoding.
-On data files generated on a Microsoft Windows operating system, run the dos2unix system command to remove any Windows-only characters before loading into Greenplum Database.
-The client-side character encoding can be changed for a session by setting the server configuration parameter client_encoding.
-SET client_encoding TO 'latin1';
 
 === Query processing 
-Query plan parsed and optimized by Master can be dispatched to single segment in some cases (e.g. single-row INSERT, UPDATE, DELETE or SELECT that filters on distribution key columns)
-https://gpdb.docs.pivotal.io/43160/graphics/targeted_dispatch.jpg
-== Query plans 
-Motion operation involves moving tuples between the segments during query processingA slice is a portion of the plan that segments can work on independently. A query plan is sliced wherever a motion operation occurs in the plan, with one slice on each side of the motion.
-This plan also has an implicit slice at the very top of the plan (slice 3) because gather motion (sending results back to master) as any other motion requires two separate slices on both sides 
-https://gpdb.docs.pivotal.io/43160/graphics/slice_plan.jpg
-(how is it redistributing Cust if Sales are distributed on Sales ID - can have all Cst ID's - as it reads Cust records it doesn't have Sale ID to hash it to correct segment)
-There is at least one worker process assigned to each slice of the query plan. Related processes that are working on the same slice of the query plan but on different segments are called gangs. 
-https://gpdb.docs.pivotal.io/43160/graphics/gangs.jpg
 == GPORCA 
-Legacy optimizer (planner) paraneters. Ignored by GPORCA unless opitmization falls back to planner. 
-cpu_index_tuple_costcpu_operator_costcpu_tuple_costcursor_tuple_fractioneffective_cache_sizegp_motion_cost_per_rowgp_segments_for_plannerrandom_page_costseq_page_co
-To enable GPORCA:* Set optimizer_analyze_root_partition to on to enable statistics collection for root partitions and run ANALYZE ROOTPARTITION (it collects stats for root partitions, leaf partitions are sampled) gpconfig -c optimizer_analyze_root_partition -v on --masteronly The ANALYZE command generates statistics on both root and individual partition tables (leaf child tables)* set optimizer parameter to "on" (system/database/session level - to disable ability to change on sess level you can use optimizer_control parameter)
-Other criteria * no multi-column partition keys* The multi-level partitioned table is a uniform multi-level partitioned table* The server configuration parameter optimizer_enable_master_only_queries is set to on when running against master only tables such as the system table pg_attribute (e)nabling this parameter decreases performance of short running catalog queries. To avoid this issue, set this parameter only for a session or a query)
-Enable on system level gpconfig -c optimizer -v on --masteronly
-Database level ALTER DATABASE test_db SET OPTIMIZER = ON ;
-Queryset optimizer = on ;
-optimizer_nestloop_factor - controls nested loop join cost factor to apply to during query optimization.optimizer_parallel_union - when the value is on, GPORCA can generate a query plan the child operations of a UNION or UNION ALL operation execute in parallel on segment instancesoptimizer_sort_factor - controls the cost factor that GPORCA applies to sorting operations during query optimization. The cost factor can be adjusted for queries when data skew is present.optimizer_print_missing_stats - controls the display of column information about columns with missing statistics for a query (default is true)optimizer_print_optimization_stats - controls the logging of GPORCA query optimization metrics for a query (default is off)
-Minidump GPORCA generates minidumps to describe the optimization context for a given query. The minidump file is located under the master data directory and uses the following naming format: Minidump_date_time.mdp and can be controlled using optimizer_minidump 
-When the EXPLAIN ANALYZE command uses GPORCA, the EXPLAIN plan shows only the number of partitions that are being eliminated (partitions are not enumerated in plans)
-Partition Selector for Part_Table (dynamic scan id: 1)        Filter: a > 10       Partitions selected:  1 (out of 3)
-To show name of the scanned partitions in the segment logs set the server configuration parameter gp_log_dynamic_partition_pruning to on.
-The WITH clause, also known as a common table expression (CTE), generates temporary tables that exist only for the query. It can be even nested 
-WITH v AS (WITH w AS (SELECT a, b FROM foo                       WHERE b < 5)            SELECT w1.a, w2.b            FROM w AS w1, w AS w2            WHERE w1.a = w2.a AND w1.a > 2)  SELECT v1.a, v2.a, v2.b  FROM v as v1, v as v2  WHERE v1.a < v2.a; 
-UPDATE operations use the query plan operator Split and supports these operationsudpates distribution key columns and partition key column.
-QUERY PLAN--------------------------------------------------------------Update  (cost=0.00..5.46 rows=1 width=1)   ->  Redistribute Motion 2:2  (slice1; segments: 2)         Hash Key: a         ->  Result  (cost=0.00..3.23 rows=1 width=48)               ->  Split  (cost=0.00..2.13 rows=1 width=40)                     ->  Result  (cost=0.00..1.05 rows=1 width=40)                           ->  Table Scan on dmltest
-New query plan operator Assert is used for constraints checking.
-QUERY PLAN------------------------------------------------------------ Insert  (cost=0.00..4.61 rows=3 width=8)   ->  Assert  (cost=0.00..3.37 rows=3 width=24)         Assert Cond: (dmlsource.a > 2) IS DISTINCT FROM false         ->  Assert  (cost=0.00..2.25 rows=3 width=24)               Assert Cond: NOT dmlsource.b IS NULL               ->  Result  (cost=0.00..1.14 rows=3 width=24)                     ->  Table Scan on dmlsource
-The command CREATE TABLE AS distributes table data randomly if the DISTRIBUTED BY clause is not specified and no primary or unique keys are specified.
-= ORCA Restrictions Queries against partitioned tables that are altered to use an external table as a leaf child partition fall back to the legacy query optimizerUnsupported features * Indexed expressions (functional index?)* Non-uniform partitioned tables* SortMergeJoin (SMJ)* CUBE* Multiple grouping sets* ROW* ROWCOMPARE* FIELDSELECT
-= 
-Following section in EXPLAIN PLAN output cnofirms that ORCA has been used  Settings:  optimizer=on Optimizer status: PQO version 1.584This illustrates fallback  Settings:  optimizer=on Optimizer status: legacy query optimizerAnd this shows that ORCA is disabled Settings:  optimizer=off Optimizer status: legacy query optimizer
 
 == Misc NEW and OLD column qualifiers can appear only in rewrite rules (what are rewrite rules?)
 SQL-based function CREATE FUNCTION dept(text) RETURNS dept    AS $$ SELECT * FROM dept WHERE name = $1 $$    LANGUAGE SQL;
